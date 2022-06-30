@@ -4,6 +4,8 @@
 
 ElasticAutocomplete is a widget combines `Autocomplete` and `Localstorage`.
 
+![](https://i.imgur.com/kUHwLxr.png)
+
 ## Features
 
 + Create a custom `TextField`, which `Autocomplete` can't do.
