@@ -182,8 +182,9 @@ class Example2State extends State<Example2> {
                   onPressed: () async {
                     if (_formKey.currentState?.validate() ?? false) {
                       String val = _textEditingCtrl.text;
-
+                      _textEditingCtrl.clear();
                       await _elasticAutocompleteCtrl.store(val);
+
                       if (!mounted) return;
                       ScaffoldMessenger.of(context)
                           .showSnackBar(SnackBar(content: Text(val)));
