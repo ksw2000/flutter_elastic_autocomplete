@@ -216,10 +216,9 @@ class ElasticAutocompleteController<T extends String> {
   }
 
   /// Clear all options in the storage unit.
-  void clear() {
+  void clear() async {
     if (useLocalStorage) {
-      _storage!.setItem(id, jsonEncode({}));
-      return;
+      return await _storage!.setItem(id, jsonEncode({}));
     }
     _sessionStorage[id] = <T>{};
   }
