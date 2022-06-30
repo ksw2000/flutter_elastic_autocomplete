@@ -35,16 +35,42 @@ class ElasticAutocomplete<T extends String> extends StatefulWidget {
 
   /// {@macro flutter.widgets.RawAutocomplete.optionsBuilder}
   final AutocompleteOptionsBuilder<T> optionsBuilder;
+
+  /// {@macro flutter.widgets.RawAutocomplete.fieldViewBuilder}
   final Widget Function(
           BuildContext, TextEditingController, FocusNode, void Function())
       fieldViewBuilder;
+
+  /// The max height of options field view.
   final double? maxHeight;
+
+  /// The [FocusNode] that is used for the text field.
+  ///
+  /// {@macro flutter.widgets.RawAutocomplete.split}
+  ///
+  /// If this parameter is not null, then [textEditingController] must also be
+  /// not null.
   final FocusNode? focusNode;
+
+  /// [controller] is used for storing options easily.
   final ElasticAutocompleteController<T>? controller;
 
   /// {@macro flutter.widgets.RawAutocomplete.onSelected}
   final void Function(T)? onSelected;
+
+  /// The [TextEditingController] that is used for the text field.
+  ///
+  /// {@macro flutter.widgets.RawAutocomplete.split}
+  ///
+  /// If this parameter is not null, then [focusNode] must also be not null.
   final TextEditingController? textEditingController;
+
+  /// {@macro flutter.widgets.RawAutocomplete.initialValue}
+  ///
+  /// Setting the initial value does not notify [textEditingController]'s
+  /// listeners, and thus will not cause the options UI to appear.
+  ///
+  /// This parameter is ignored if [textEditingController] is defined.
   final TextEditingValue? initialValue;
 
   @override
@@ -116,79 +142,100 @@ class ElasticAutocompleteState<T extends String>
   }
 }
 
-/// A controller for an ElasticAutocomplete
+/// A controller for an ElasticAutocomplete, which controls the list of options.
 class ElasticAutocompleteController<T extends String> {
+  /// [id] is used to distinguish different memory units.
   final String id;
-  LocalStorage? storage;
-  final bool useLocalstorage;
-  Map<String, Set> sessionStorage = <String, Set>{};
 
-  /// [id] is used to distinguish different memory unit.
+  /// With localStorage, the data is persisted until the user manually
+  /// clears cache.
+  final bool useLocalStorage;
+
+  /// Decide [optionsBuilder] to be case sensitive or not.
+  final bool caseSensitive;
+
+  /// Returns true to add [candidate] to the option list
+  bool Function(T candidate, String userInput)? contains;
+
+  LocalStorage? _storage;
+  final Map<String, Set> _sessionStorage = <String, Set>{};
+
+  /// You can set [contains] in order to decide which options should be chosen.
+  /// from the memory unit. Your custom [contains] function will be used
+  /// in [optionsBuilder].
   ///
-  /// If you do not want to store value in localstorage, set [useLocalstorage]
-  /// to be `false`.
-  /// With localStorage , the data is persisted until the user manually clears
-  /// the browser cache or app cache.
-  ElasticAutocompleteController(
-      {required this.id, this.useLocalstorage = true}) {
-    if (useLocalstorage) {
-      storage = LocalStorage(id);
+  /// If you set [contains], then [caseSensitive] is neglected.
+  ElasticAutocompleteController({
+    required this.id,
+    this.useLocalStorage = true,
+    this.caseSensitive = false,
+    this.contains,
+  }) {
+    if (useLocalStorage) {
+      _storage = LocalStorage(id);
     } else {
-      sessionStorage[id] = <T>{};
+      _sessionStorage[id] = <T>{};
     }
   }
 
-  /// load options from the bucket
+  /// Load options from the storage unit as a set.
   Set<T> loadSet() {
-    if (useLocalstorage) {
+    if (useLocalStorage) {
       try {
-        return Set.from(jsonDecode(storage!.getItem(id))['info'].cast<T>());
+        return Set.from(jsonDecode(_storage!.getItem(id))['info'].cast<T>());
       } catch (e) {
         return <T>{};
       }
     }
-    return sessionStorage[id]?.cast<T>() ?? <T>{};
+    return _sessionStorage[id]?.cast<T>() ?? <T>{};
   }
 
+  /// Load options from the storage unit as a list.
   List<T> loadList() {
-    if (useLocalstorage) {
+    if (useLocalStorage) {
       try {
-        return jsonDecode(storage!.getItem(id))['info'].cast<T>();
+        return jsonDecode(_storage!.getItem(id))['info'].cast<T>();
       } catch (e) {
         return <T>[];
       }
     }
-    return sessionStorage[id]?.toList().cast<T>() ?? <T>[];
+    return _sessionStorage[id]?.toList().cast<T>() ?? <T>[];
   }
 
-  /// store [val] to the bucket
+  /// Store [val] to the storage unit.
   Future store(T val) async {
-    if (useLocalstorage) {
+    if (useLocalStorage) {
       var oldList = loadList();
       if (!oldList.any((element) => element == val)) {
         oldList.add(val);
       }
 
-      return await storage!.setItem(id, jsonEncode({'info': oldList}));
+      return await _storage!.setItem(id, jsonEncode({'info': oldList}));
     }
-    return sessionStorage[id]?.add(val);
+    return _sessionStorage[id]?.add(val);
   }
 
-  void clean() {
-    if (useLocalstorage) {
-      storage!.setItem(id, jsonEncode({}));
+  /// Clear all options in the storage unit.
+  void clear() {
+    if (useLocalStorage) {
+      _storage!.setItem(id, jsonEncode({}));
       return;
     }
-    sessionStorage[id] = <T>{};
+    _sessionStorage[id] = <T>{};
   }
 
   Iterable<T> optionsBuilder(TextEditingValue textEditingValue) {
     if (textEditingValue.text == '') {
       return List<T>.empty();
     }
-    return loadList().where((String option) {
-      return option.contains(textEditingValue.text);
+
+    return loadList().where((T option) {
+      return contains?.call(option, textEditingValue.text) ??
+          (caseSensitive
+              ? option.contains(textEditingValue.text)
+              : option
+                  .toLowerCase()
+                  .contains(textEditingValue.text.toLowerCase()));
     });
   }
 }
-
