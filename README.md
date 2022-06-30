@@ -113,6 +113,7 @@ class MyWidgetState extends State<MyWidget> {
                         border: OutlineInputBorder(),
                       ));
                 }),
+            // store new value to memory unit
             ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
@@ -123,6 +124,7 @@ class MyWidgetState extends State<MyWidget> {
                   }
                 },
                 child: const Text("send")),
+            // clear all options in memory unit
             ElevatedButton(
               onPressed: () {
                 _elasticAutocompleteCtrl.clear();
