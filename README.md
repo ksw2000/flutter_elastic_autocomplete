@@ -1,18 +1,21 @@
 # ElasticAutocomplete
 
-![](https://img.shields.io/github/license/liao2000/flutter_elastic_autocomplete?style=flat-square) ![](https://img.shields.io/github/issues/liao2000/flutter_elastic_autocomplete?color=orange&style=flat-square) ![](https://img.shields.io/github/stars/liao2000/flutter_elastic_autocomplete?color=blue&logo=github&style=flat-square)
+![](https://img.shields.io/pub/v/elastic_autocomplete?color=green&logo=flutter&style=flat-square) [![](https://img.shields.io/github/issues/liao2000/flutter_elastic_autocomplete?color=orange&style=flat-square)](https://github.com/liao2000/flutter_elastic_autocomplete/issues) ![](https://img.shields.io/github/stars/liao2000/flutter_elastic_autocomplete?color=blue&logo=github&style=flat-square)
 
-ElasticAutocomplete is a widget combines `Autocomplete` and `Localstorage`.
+ElasticAutocomplete is a widget combines `Autocomplete` and `LocalStorage`.
 
-![](https://i.imgur.com/kUHwLxr.png)
+![](https://i.imgur.com/RxMweHd.png)
+
+[Demo.webm](https://user-images.githubusercontent.com/13825170/176996891-9959183c-39bb-41cb-9c1e-7f79af80f1d3.webm)
 
 ## Features
 
-+ Create a custom `TextField`, which `Autocomplete` can't do.
-+ It it easy to handle the list of options by `ElasticAutocompleteController`.
-    + You can store data in `localstorage` which keeps data until user clean it.
-    + You can store data in `memory` (like session storage) which keeps data until the program terminates.
-    + You can use case-sensitive mode or case-insensitive mode.
++ Create a custom `TextFromField` by `fieldViewBuilder`.
++ It it easy to handle the option list by `ElasticAutocompleteController`.
+    + You can store data in local storage which keeps data until user clean it.
+    + You can also store data just in memory (like session storage) which keeps data until the program terminates.
+    + You can share the memory unit by setting the same `id`. 
+    + You can use case-sensitive mode or case-insensitive mode when generating options.
 
 ## Usage
 
@@ -72,7 +75,7 @@ class MyWidgetState extends State<MyWidget> {
     _node = FocusNode();
     _textEditingCtrl = TextEditingController();
     _elasticAutocompleteCtrl =
-        ElasticAutocompleteController(id: 'name', caseSensitive: false);
+        ElasticAutocompleteController(id: 'example', caseSensitive: false);
     super.initState();
   }
 
@@ -113,18 +116,20 @@ class MyWidgetState extends State<MyWidget> {
                         border: OutlineInputBorder(),
                       ));
                 }),
-            // store new value to memory unit
+            // store new value to the memory unit
             ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
                     String val = _textEditingCtrl.text;
+                    // empty text input due to sending
                     _textEditingCtrl.clear();
+                    // store to the memory unit
                     await _elasticAutocompleteCtrl.store(val);
                     print(val);
                   }
                 },
                 child: const Text("send")),
-            // clear all options in memory unit
+            // clear all options in the memory unit
             ElevatedButton(
               onPressed: () {
                 _elasticAutocompleteCtrl.clear();
@@ -136,3 +141,8 @@ class MyWidgetState extends State<MyWidget> {
   }
 }
 ```
+
+## Documentation
+
++ [API reference](https://pub.dev/documentation/elastic_autocomplete/latest/elastic_autocomplete/elastic_autocomplete-library.html)
+

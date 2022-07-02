@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'ElasticAutocomplete'),
     );
   }
 }
@@ -41,8 +41,34 @@ class MyHomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const <Widget>[
+                    Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Text(
+                          'Demo1 build options without controller',
+                          style: TextStyle(fontSize: 18),
+                        )),
                     Example1(),
+                    Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Text(
+                          'Demo2 build options with controller',
+                          style: TextStyle(fontSize: 18),
+                        )),
                     Example2(),
+                    Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Text(
+                          'Demo3 customize text input field',
+                          style: TextStyle(fontSize: 18),
+                        )),
+                    Example3(),
+                    Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Text(
+                          'Demo4 shares the same storage unit with demo2',
+                          style: TextStyle(fontSize: 18),
+                        )),
+                    Example4(),
                   ],
                 ),
               ))),
@@ -60,54 +86,43 @@ class Example1 extends StatefulWidget {
 class Example1State extends State<Example1> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-            padding: EdgeInsets.symmetric(vertical: 15),
-            child: Text(
-              'Example1: set options in advance.',
-              style: TextStyle(fontSize: 18),
-            )),
-        ElasticAutocomplete<String>(
-            optionsBuilder: (TextEditingValue textEditingValue) {
-          if (textEditingValue.text == '') {
-            return const Iterable<String>.empty();
-          }
-          const List<String> candidates = [
-            "app",
-            "bar",
-            "car",
-            "dot",
-            "ear",
-            "foo",
-            "god",
-            "hop",
-            "ice",
-            "jam"
-          ];
-          return candidates.where((String option) {
-            return option.contains(textEditingValue.text);
-          });
-        }, fieldViewBuilder: (BuildContext context,
-                TextEditingController textEditingController,
-                FocusNode focusNode,
-                void Function() onFieldSubmitted) {
-          // Design field view by yourself
-          return TextFormField(
-              autofocus: true,
-              // You must set controller, focusNode, and onFieldSubmitted in the textFormField
-              controller: textEditingController,
-              focusNode: focusNode,
-              onFieldSubmitted: (String value) {
-                onFieldSubmitted();
-              },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ));
-        }),
-      ],
-    );
+    return ElasticAutocomplete(
+        optionsBuilder: (TextEditingValue textEditingValue) {
+      if (textEditingValue.text == '') {
+        return const Iterable<String>.empty();
+      }
+      const List<String> candidates = [
+        "app",
+        "bar",
+        "car",
+        "dot",
+        "ear",
+        "foo",
+        "god",
+        "hop",
+        "ice",
+        "jam"
+      ];
+      return candidates.where((String option) {
+        return option.contains(textEditingValue.text);
+      });
+    }, fieldViewBuilder: (BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            void Function() onFieldSubmitted) {
+      // Design field view by yourself
+      return TextFormField(
+          autofocus: true,
+          // You must set controller, focusNode, and onFieldSubmitted in the textFormField
+          controller: textEditingController,
+          focusNode: focusNode,
+          onFieldSubmitted: (String value) {
+            onFieldSubmitted();
+          },
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ));
+    });
   }
 }
 
@@ -129,7 +144,7 @@ class Example2State extends State<Example2> {
     _node = FocusNode();
     _textEditingCtrl = TextEditingController();
     _elasticAutocompleteCtrl =
-        ElasticAutocompleteController(id: 'name', caseSensitive: false);
+        ElasticAutocompleteController(id: 'example2', caseSensitive: false);
     super.initState();
   }
 
@@ -147,13 +162,7 @@ class Example2State extends State<Example2> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-                padding: EdgeInsets.symmetric(vertical: 15),
-                child: Text(
-                  'Example2: store options after sending.',
-                  style: TextStyle(fontSize: 18),
-                )),
-            ElasticAutocomplete<String>(
+            ElasticAutocomplete(
                 controller: _elasticAutocompleteCtrl,
                 // use optionsBuilder which is generated by controller
                 optionsBuilder: _elasticAutocompleteCtrl.optionsBuilder,
@@ -186,8 +195,8 @@ class Example2State extends State<Example2> {
                       await _elasticAutocompleteCtrl.store(val);
 
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(val)));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Append "$val" to the options')));
                     }
                   },
                   child:
@@ -207,5 +216,63 @@ class Example2State extends State<Example2> {
             )
           ],
         ));
+  }
+}
+
+class Example3 extends StatelessWidget {
+  const Example3({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    ElasticAutocompleteController ctrl = ElasticAutocompleteController(
+        id: 'example3',
+        initialOptions: ["apple", "banana", "cat", "dog", "elephant"],
+        showTopKWhenInputEmpty: 3);
+    return ElasticAutocomplete(
+        controller: ctrl,
+        optionsBuilder: ctrl.optionsBuilder,
+        fieldViewBuilder: (BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            void Function() onFieldSubmitted) {
+          return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              onFieldSubmitted: (String value) {
+                onFieldSubmitted();
+              },
+              cursorColor: Colors.green,
+              style: const TextStyle(color: Colors.green),
+              decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.search),
+                  hintText: 'hint text'));
+        });
+  }
+}
+
+class Example4 extends StatelessWidget {
+  const Example4({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    ElasticAutocompleteController ctrl = ElasticAutocompleteController(
+        // use the same id with example2
+        id: 'example2');
+    return ElasticAutocomplete(
+        controller: ctrl,
+        optionsBuilder: ctrl.optionsBuilder,
+        fieldViewBuilder: (BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            void Function() onFieldSubmitted) {
+          return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              onFieldSubmitted: (String value) {
+                onFieldSubmitted();
+              },
+              decoration: const InputDecoration(border: OutlineInputBorder()));
+        });
   }
 }

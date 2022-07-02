@@ -3,6 +3,7 @@ library elastic_autocomplete;
 import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:flutter/scheduler.dart';
+import 'dart:math';
 import 'dart:convert';
 
 /// A widget wraps `RawAutocomplete`.
@@ -17,14 +18,15 @@ class ElasticAutocomplete<T extends String> extends StatefulWidget {
   /// simultaneously.
   const ElasticAutocomplete({
     Key? key,
-    this.maxHeight,
     required this.optionsBuilder,
     required this.fieldViewBuilder,
     this.controller,
+    this.textEditingController,
     this.focusNode,
     this.onSelected,
-    this.textEditingController,
     this.initialValue,
+    this.optionsViewBuilder,
+    this.optionsViewMaxHeight = 200.0,
   })  : assert((focusNode == null) == (textEditingController == null),
             'you should define focusNode and textEditingController simultaneously.'),
         assert(
@@ -41,8 +43,8 @@ class ElasticAutocomplete<T extends String> extends StatefulWidget {
           BuildContext, TextEditingController, FocusNode, void Function())
       fieldViewBuilder;
 
-  /// The max height of options field view.
-  final double? maxHeight;
+  /// The max height of options view.
+  final double optionsViewMaxHeight;
 
   /// The [FocusNode] that is used for the text field.
   ///
@@ -73,6 +75,10 @@ class ElasticAutocomplete<T extends String> extends StatefulWidget {
   /// This parameter is ignored if [textEditingController] is defined.
   final TextEditingValue? initialValue;
 
+  /// {@macro flutter.widgets.RawAutocomplete.optionsViewBuilder}
+  final Widget Function(BuildContext, void Function(T), Iterable<T>)?
+      optionsViewBuilder;
+
   @override
   State<ElasticAutocomplete> createState() => ElasticAutocompleteState<T>();
 }
@@ -89,61 +95,87 @@ class ElasticAutocompleteState<T extends String>
               initialValue: widget.initialValue,
               optionsBuilder: widget.optionsBuilder,
               fieldViewBuilder: widget.fieldViewBuilder,
-              optionsViewBuilder: (BuildContext context,
-                  AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
-                return Align(
-                  alignment: Alignment.topLeft,
-                  child: Material(
-                    elevation: 4.0,
-                    child: Container(
-                      width: constraints.biggest.width,
-                      constraints: BoxConstraints(
-                        maxHeight: widget.maxHeight ?? 200.0,
-                      ),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: options.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final T option = options.elementAt(index);
-                          return InkWell(
-                            onTap: () {
-                              onSelected(option);
-                            },
-                            child: Builder(builder: (BuildContext context) {
-                              final bool highlight =
-                                  AutocompleteHighlightedOption.of(context) ==
-                                      index;
-                              if (highlight) {
-                                SchedulerBinding.instance
-                                    .addPostFrameCallback((Duration timeStamp) {
-                                  Scrollable.ensureVisible(context,
-                                      alignment: 0.5);
-                                });
-                              }
-                              return Container(
-                                color: highlight
-                                    ? Theme.of(context).focusColor
-                                    : null,
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                    RawAutocomplete.defaultStringForOption(
-                                        option)),
+              optionsViewBuilder: widget.optionsViewBuilder ??
+                  (BuildContext context, AutocompleteOnSelected<T> onSelected,
+                      Iterable<T> options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        child: Container(
+                          width: constraints.biggest.width,
+                          constraints: BoxConstraints(
+                            maxHeight: widget.optionsViewMaxHeight,
+                          ),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final T option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () {
+                                  onSelected(option);
+                                },
+                                child: Builder(builder: (BuildContext context) {
+                                  final bool highlight =
+                                      AutocompleteHighlightedOption.of(
+                                              context) ==
+                                          index;
+                                  if (highlight) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback(
+                                            (Duration timeStamp) {
+                                      Scrollable.ensureVisible(context,
+                                          alignment: 0.5);
+                                    });
+                                  }
+                                  return Container(
+                                    color: highlight
+                                        ? Theme.of(context).focusColor
+                                        : null,
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                        RawAutocomplete.defaultStringForOption(
+                                            option)),
+                                  );
+                                }),
                               );
-                            }),
-                          );
-                        },
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                    );
+                  },
             ));
   }
 }
 
 /// A controller for an ElasticAutocomplete, which controls the list of options.
 class ElasticAutocompleteController<T extends String> {
+  /// You can set [contains] in order to decide which options should be chosen.
+  /// from the memory unit. Your custom [contains] function will be used
+  /// in [optionsBuilder]. If you set [contains], then [caseSensitive]
+  /// is neglected.
+  ElasticAutocompleteController({
+    required this.id,
+    this.useLocalStorage = true,
+    this.caseSensitive = false,
+    this.latestFirst = true,
+    this.initialOptions,
+    this.showTopKWhenInputEmpty = 0,
+    this.contains,
+  }) {
+    if (useLocalStorage) {
+      _storage = LocalStorage(id);
+    } else {
+      sessionStorage[id] = <T>[];
+    }
+    if (initialOptions != null) {
+      _storeList(initialOptions!);
+    }
+  }
+
   /// [id] is used to distinguish different memory units.
   final String id;
 
@@ -154,44 +186,26 @@ class ElasticAutocompleteController<T extends String> {
   /// Decide [optionsBuilder] to be case sensitive or not.
   final bool caseSensitive;
 
+  /// If true, the new value is considered first.
+  final bool latestFirst;
+
+  /// Pass the initial options.
+  final List<T>? initialOptions;
+
+  /// Show at most how many options even if the users input nothing.
+  final int showTopKWhenInputEmpty;
+
   /// Returns true to add [candidate] to the option list
+  ///
+  /// If you set [contains], then [caseSensitive]
+  /// is neglected.
   bool Function(T candidate, String userInput)? contains;
 
   LocalStorage? _storage;
-  final Map<String, Set> _sessionStorage = <String, Set>{};
+  static Map<String, List> sessionStorage = <String, List>{};
 
-  /// You can set [contains] in order to decide which options should be chosen.
-  /// from the memory unit. Your custom [contains] function will be used
-  /// in [optionsBuilder].
-  ///
-  /// If you set [contains], then [caseSensitive] is neglected.
-  ElasticAutocompleteController({
-    required this.id,
-    this.useLocalStorage = true,
-    this.caseSensitive = false,
-    this.contains,
-  }) {
-    if (useLocalStorage) {
-      _storage = LocalStorage(id);
-    } else {
-      _sessionStorage[id] = <T>{};
-    }
-  }
-
-  /// Load options from the storage unit as a set.
-  Set<T> loadSet() {
-    if (useLocalStorage) {
-      try {
-        return Set.from(jsonDecode(_storage!.getItem(id))['info'].cast<T>());
-      } catch (e) {
-        return <T>{};
-      }
-    }
-    return _sessionStorage[id]?.cast<T>() ?? <T>{};
-  }
-
-  /// Load options from the storage unit as a list.
-  List<T> loadList() {
+  /// Load options from the storage unit.
+  List<T> load() {
     if (useLocalStorage) {
       try {
         return jsonDecode(_storage!.getItem(id))['info'].cast<T>();
@@ -199,20 +213,40 @@ class ElasticAutocompleteController<T extends String> {
         return <T>[];
       }
     }
-    return _sessionStorage[id]?.toList().cast<T>() ?? <T>[];
+    return sessionStorage[id]?.cast<T>() ?? <T>[];
   }
 
   /// Store [val] to the storage unit.
   Future store(T val) async {
-    if (useLocalStorage) {
-      var oldList = loadList();
-      if (!oldList.any((element) => element == val)) {
+    var oldList = load();
+    bool append = true;
+    for (int i = 0; i < oldList.length; i++) {
+      if (oldList[i].toLowerCase() == val.toLowerCase()) {
+        append = false;
+        // update value when using case-insensitive mode
+        if (!caseSensitive) {
+          oldList[i] = val;
+        }
+        break;
+      }
+    }
+
+    if (append) {
+      if (latestFirst) {
+        oldList = [val, ...oldList];
+      } else {
         oldList.add(val);
       }
-
-      return await _storage!.setItem(id, jsonEncode({'info': oldList}));
     }
-    return _sessionStorage[id]?.add(val);
+
+    _storeList(oldList);
+  }
+
+  Future _storeList(List<T> list) async {
+    if (useLocalStorage) {
+      return await _storage!.setItem(id, jsonEncode({'info': list}));
+    }
+    return sessionStorage[id] = list;
   }
 
   /// Clear all options in the storage unit.
@@ -220,15 +254,17 @@ class ElasticAutocompleteController<T extends String> {
     if (useLocalStorage) {
       return await _storage!.setItem(id, jsonEncode({}));
     }
-    _sessionStorage[id] = <T>{};
+    sessionStorage[id] = <T>[];
   }
 
   Iterable<T> optionsBuilder(TextEditingValue textEditingValue) {
+    List<T> options = load();
+
     if (textEditingValue.text == '') {
-      return List<T>.empty();
+      return options.sublist(0, min(options.length, showTopKWhenInputEmpty));
     }
 
-    return loadList().where((T option) {
+    return options.where((T option) {
       return contains?.call(option, textEditingValue.text) ??
           (caseSensitive
               ? option.contains(textEditingValue.text)
