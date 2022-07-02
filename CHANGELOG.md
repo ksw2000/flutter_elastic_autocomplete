@@ -12,6 +12,7 @@
   * `latestFirst` sorts options by latest input.
   * `showTopKWhenInputEmpty` shows at most K options even if there is no input.
   * `initialOptions` stores all initial options to the memory unit.
+  * `fieldViewBuilder` generates a default field view builder.
 
 ### Bug fixes
 
