@@ -231,14 +231,14 @@ class ElasticAutocompleteController<T extends String> {
         if (e == val) {
           continue;
         }
-        newList.add(val);
+        newList.add(e);
       }
     } else {
       for (var e in oldList) {
         if (e.toLowerCase() == val.toLowerCase()) {
           continue;
         }
-        newList.add(val);
+        newList.add(e);
       }
     }
 
