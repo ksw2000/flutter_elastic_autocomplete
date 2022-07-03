@@ -1,0 +1,17 @@
+# https://github.com/marketplace/actions/publish-dart-flutter-package
+name: test
+
+on:
+  push
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: sakebook/actions-flutter-pub-publisher@v1.4.0
+        with:
+          credential: ${{ secrets.CREDENTIAL_JSON }}
+          skip_test: false
+          flutter_package: true
+          dry_run: true
