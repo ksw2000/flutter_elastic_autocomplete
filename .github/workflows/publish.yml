@@ -8,12 +8,12 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
+          
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v1
       - uses: sakebook/actions-flutter-pub-publisher@v1.4.0
         with:
           credential: ${{ secrets.CREDENTIAL_JSON }}
-          flutter_package: false
           skip_test: true
-          dry_run: true
+          flutter_package: true
+          dry_run: false
