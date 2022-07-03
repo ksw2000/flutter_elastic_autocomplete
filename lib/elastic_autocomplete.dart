@@ -310,6 +310,7 @@ class ElasticAutocompleteController<T extends String> {
     ValueChanged<String>? onChanged,
     GestureTapCallback? onTap,
     VoidCallback? onEditingComplete,
+    void Function(String)? onFieldSubmitted,
     FormFieldSetter<String>? onSaved,
     FormFieldValidator<String>? validator,
     List<TextInputFormatter>? inputFormatters,
@@ -335,7 +336,7 @@ class ElasticAutocompleteController<T extends String> {
       BuildContext context,
       TextEditingController textEditingController,
       FocusNode focusNode,
-      void Function() onFieldSubmitted,
+      void Function() onFieldSubmittedInner,
     ) {
       return TextFormField(
           key: key,
@@ -369,7 +370,8 @@ class ElasticAutocompleteController<T extends String> {
           onTap: onTap,
           onEditingComplete: onEditingComplete,
           onFieldSubmitted: (String value) {
-            onFieldSubmitted();
+            onFieldSubmittedInner();
+            onFieldSubmitted?.call(value);
           },
           onSaved: onSaved,
           validator: validator,

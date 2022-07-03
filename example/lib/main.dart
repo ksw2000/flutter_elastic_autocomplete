@@ -91,7 +91,7 @@ class Example1State extends State<Example1> {
       if (textEditingValue.text == '') {
         return const Iterable<String>.empty();
       }
-      const List<String> candidates = [
+      const List<String> options = [
         "app",
         "bar",
         "car",
@@ -103,7 +103,7 @@ class Example1State extends State<Example1> {
         "ice",
         "jam"
       ];
-      return candidates.where((String option) {
+      return options.where((String option) {
         return option.contains(textEditingValue.text);
       });
     }, fieldViewBuilder: (BuildContext context,
