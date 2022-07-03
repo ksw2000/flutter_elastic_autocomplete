@@ -1,4 +1,4 @@
-# https://github.com/marketplace/actions/publish-dart-flutter-package
+# https://github.com/marketplace/actions/dart-and-flutter-package-publisher
 name: test
 
 on:
@@ -8,10 +8,13 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: sakebook/actions-flutter-pub-publisher@v1.4.0
+      - name: 'checkout'
+        uses: actions/checkout@v2
+
+      - name: 'publish'
+        uses: k-paxian/dart-package-publisher@master
         with:
-          credential: ${{ secrets.CREDENTIAL_JSON }}
-          skip_test: true
-          flutter_package: true
-          dry_run: true
+          # skipTests: true
+          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
+          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
+          dryRunOnly: true
