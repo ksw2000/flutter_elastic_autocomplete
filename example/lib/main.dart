@@ -37,35 +37,35 @@ class MyHomePage extends StatelessWidget {
               child: Center(
                   child: Container(
                 constraints: const BoxConstraints(maxWidth: 400),
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const <Widget>[
+                  children: <Widget>[
                     Padding(
                         padding: EdgeInsets.symmetric(vertical: 15),
                         child: Text(
-                          'Demo1 build options without controller',
+                          'Demo 1 build options without controller',
                           style: TextStyle(fontSize: 18),
                         )),
                     Example1(),
                     Padding(
                         padding: EdgeInsets.symmetric(vertical: 15),
                         child: Text(
-                          'Demo2 build options with controller',
+                          'Demo 2 build options with controller',
                           style: TextStyle(fontSize: 18),
                         )),
                     Example2(),
                     Padding(
                         padding: EdgeInsets.symmetric(vertical: 15),
                         child: Text(
-                          'Demo3 customize text input field',
+                          'Demo 3 customize text input field',
                           style: TextStyle(fontSize: 18),
                         )),
                     Example3(),
                     Padding(
                         padding: EdgeInsets.symmetric(vertical: 15),
                         child: Text(
-                          'Demo4 shares the same storage unit with demo2',
+                          'Demo 4 shares the same storage with demo2',
                           style: TextStyle(fontSize: 18),
                         )),
                     Example4(),
