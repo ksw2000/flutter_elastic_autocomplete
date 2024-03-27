@@ -1,10 +1,10 @@
 name: elastic_autocomplete
 description: ElasticAutocomplete is a widget combines Autocomplete and Localstorage.
 version: 0.2.0
-homepage: https://github.com/liao2000/flutter_elastic_autocomplete
-repository: https://github.com/liao2000/flutter_elastic_autocomplete
-issue_tracker: https://github.com/liao2000/flutter_elastic_autocomplete/issues
-documentation: https://github.com/liao2000/flutter_elastic_autocomplete/blob/main/README.md
+homepage: https://github.com/ksw2000/flutter_elastic_autocomplete
+repository: https://github.com/ksw2000/flutter_elastic_autocomplete
+issue_tracker: https://github.com/ksw2000/flutter_elastic_autocomplete/issues
+documentation: https://github.com/ksw2000/flutter_elastic_autocomplete/blob/main/README.md
 
 environment:
   sdk: ">=2.17.5 <4.0.0"
