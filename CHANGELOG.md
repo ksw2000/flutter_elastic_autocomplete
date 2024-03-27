@@ -1,7 +1,5 @@
 ## 0.2.0
 
-### 
-
 + Update dependent package `localstorage`
 + Remove parameter `toolbarOptions` in fieldViewBuilder
 
